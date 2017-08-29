@@ -1,0 +1,1240 @@
+#+TITLE: Functional Summer 2017
+#+AUTHOR: Colin
+#+HTML_HEAD: <link rel="stylesheet" type="text/css" href="/home/colin/code/org-theme.css"/>
+
+* Chapter 1
+
+** Exercises
+
+*** Combinators
+
+1. Yes
+2. No
+3. Yes
+4. Yes
+5. No
+
+*** Normal form?
+
+1. Yes
+2. No
+3. Yes
+
+*** Beta reduction
+
+/On paper./
+
+* Chapter 2
+* Chapter 3
+
+~:type~ can also be written as ~:t~.
+
+#+BEGIN_QUOTE
+Typeclasses provide definitions of operations, or functions, that can be
+shared across sets of types.
+#+END_QUOTE
+
+** Exercises
+
+*** Scope
+
+1. Yes
+2. No
+3. No
+4. Yes
+
+*** Syntax Errors
+
+1. Won't compile (~++~ in bad place)
+2. Won't compile (trying to concat chars)
+3. Will compile
+
+*** Reading Syntax
+
+1. Good?
+  a. Yes
+  b. No
+  c. Yes
+  d. No
+  e. No
+  f. Yes
+  g. No
+  h. Yes
+
+2. Matching
+  a. d
+  b. c
+  c. e
+  d. a
+  e. b
+
+*** Building Functions
+
+1.
+
+#+BEGIN_SRC haskell
+  "Curry is awesome" ++ "!"
+
+  [head $ drop 4 "Curry is awesome!"]
+
+  drop 9 "Curry is awesome!"
+#+END_SRC
+
+2.
+
+#+BEGIN_SRC haskell
+  great :: String -> String
+  great s = s ++ "!"
+
+  fifth :: String -> Char
+  fifth s = head $ drop 4 s
+  -- fifth = head . drop 4
+  -- fifth (_:_:_:_:c:_) = c
+  -- fifth s = s !! 4
+#+END_SRC
+
+3. See above.
+
+4.
+
+#+BEGIN_SRC haskell
+  letterIndex :: Int -> Char
+  letterIndex x = "Curry is awesome!" !! x
+#+END_SRC
+
+5.
+
+#+BEGIN_SRC haskell
+  rvrs :: String
+  rvrs = concat [awesome, is, currie]
+    where line = "Curry is awesome"
+          currie = take 5 line
+          is = take 2 $ drop 6 line
+          awesome = drop 9 line
+#+END_SRC
+
+Real way:
+
+#+BEGIN_SRC haskell
+  -- words :: String -> [String]
+  -- unwords :: [String] -> String
+  rvrs :: String -> String
+  rvrs = unwords . reverse . words
+#+END_SRC
+* Chapter 4
+
+The /ML/ reference in the opening quote wasn't for machine learning, it was
+for the ML language.
+
+The word /superclass/ does not mean the same thing that is does in OO.
+
+#+BEGIN_QUOTE
+(page 105) To oversimplify, ~(x * 100)~ evaluates to a numeric result, and
+numbers aren't truth values.
+#+END_QUOTE
+
+Pattern matching with tuples:
+
+#+BEGIN_SRC haskell
+  myFst :: (a,b) -> a
+  myFst (a, _) = a
+
+  mySwap :: (a,b) -> (b,a)
+  mySwap (a,b) = (b,a)
+#+END_SRC
+
+** Exercises
+
+*** Mood Swing
+
+1. Mood
+2. Blah and Woot
+3. Woot is a value, not a type.
+4 and 5
+
+#+BEGIN_SRC haskell
+  data Mood = Blah | Woot deriving Show
+
+  changeMood :: Mood -> Mood
+  changeMood Blah = Woot
+  changeMood Woot = Blah
+#+END_SRC
+*** Find the Mistakes
+
+#+BEGIN_SRC haskell
+  -- Which happens first, the `not` or the `&&`?
+  not True && True
+
+  not (x == 6)
+
+  ["Merry"] > ["Happy"]
+
+  ["1", "2", "3"] ++ "look at me!"
+#+END_SRC
+
+*** Chapter Exercises
+
+#+BEGIN_SRC haskell
+  awesome :: [String]
+  awesome = ["Papuchon", "curry", ":)"]
+
+  alsoAwesome :: [String]
+  alsoAwesome = ["Quake", "The Simons"]
+
+  allAwesome :: [[String]]
+  allAwesome = [awesome, alsoAwesome]
+
+  -- (1) length :: [a] -> Int
+  -- (2) 5, 3, 2, 5
+  -- (3) The second will not compile because `Int` is not `Fractional`.
+  -- (4) You could use `div`, but that could result in numerical error.
+  -- (5) Bool. We expect True.
+  -- (6) Bool. False.
+  -- (7) True, BAD, 5, False, BAD
+
+  isPalindrome :: Eq a => [a] -> Bool
+  isPalindrome x = x == reverse x
+
+  myAbs :: Integer -> Integer
+  myAbs n = if n < 0 then n * (-1) else n
+
+  f :: (a,b) -> (c,d) -> ((b,d), (a,c))
+  f ab cd = ((snd ab, snd cd), (fst ab, fst cd))
+  -- f (a,b) (c,d) = ((b,d), (a,c))  -- Using pattern matching
+#+END_SRC
+
+**** Correcting Syntax
+
+#+BEGIN_SRC haskell
+  x = (+)
+
+  f xs = w `x` 1
+    where w = length xs
+
+  \x -> x
+
+  \(x:_) -> x
+
+  f (a,b) = a
+#+END_SRC
+
+**** Match the function names to their types
+
+1. (c)
+2. (b)
+3. (a)
+4. (d)
+* Chapter 5
+
+#+BEGIN_QUOTE
+In Haskell, you cannot create untyped data.
+#+END_QUOTE
+
+#+BEGIN_QUOTE
+However, we believe Haskell provides a type system that more closely resembles
+a quiet, pleasant conversation with a colleague than an argument in the bazaar.
+Much of what we suggest ... is about creating habits conducive to having this
+pleasant back-and-forth with your type system.
+#+END_QUOTE
+
+There is no automatic type-casting between concrete number types.
+
+#+BEGIN_SRC haskell
+  a :: Num a => a
+  a = 5
+
+  b :: Int
+  b = 7
+
+  c :: Double
+  c = 4.5
+
+  -- Recall: (+) :: Num a => a -> a -> a
+  a + b  -- Good!
+  a + c  -- Good!
+  b + c  -- Bad :(
+#+END_SRC
+
+#+BEGIN_QUOTE
+So, 'polymorphic' means "made of many forms". In programming, this is understood
+to be in constrast with /monomorphic/, "made of one form."
+#+END_QUOTE
+
+^ Monomorphic is a lesser known term, but just as important.
+
+** Exercises
+
+*** Type Matching
+
+a and c
+b and d
+c and b
+d and a
+e and e
+
+*** Type Arguments
+
+1. ~Char -> Char -> Char~
+2. ~Char~
+3. ~Num b => b~
+4. ~Double~
+5. ~[Char]~
+6. ~Eq b => b -> [Char]~
+7. ~(Num a, Ord, a) => a~
+8. Same as 7
+9. ~Integer~
+*** Parametricity
+
+1. Yeah, it's impossible.
+2.
+
+#+BEGIN_SRC haskell
+  foo :: a -> a -> a
+  foo x y = x
+
+  bar :: a -> a -> a
+  bar x y = y
+
+  -- Can't do anything else!
+#+END_SRC
+
+3.
+
+#+BEGIN_SRC haskell
+  -- const :: a -> b -> a
+  constLike :: a -> b -> b
+  constLike a b = b
+
+  -- Behaviour doesn't change even when `a` and `b` change.
+#+END_SRC
+
+*** Apply Yourself
+
+1. ~a~ becomes ~Char~
+2. Fractional
+3. ~a~ becomes ~Char~
+4. ~a~ becomes ~Int~
+5. ~a~ becomes ~Char~
+
+*** Multiple Choice
+
+1. c
+2. a
+3. b
+4. c
+
+*** Determine the type
+
+1.
+a. ~Num a => a~
+b. ~Num a => (a, String)~
+c. ~(Integer, String)~
+d. ~Bool~
+e. ~Int~
+f. ~Bool~
+
+1. ~Num a => a~
+2. ~Num a => a -> a~
+3. ~Fractional a => a~
+4. ~String~
+
+*** Does it compile?
+
+1. ~wahoo~ won't since ~bigNum~ takes no args.
+2. All good
+3. c and d are bad
+4. No c in scope
+
+*** Type variable or specific type constructor?
+
+1. Example
+2. Full poly, concrete, concrete
+3. Full poly, constrained, concrete
+4. full, full, concrete
+
+*** Write a type signature
+
+#+BEGIN_SRC haskell
+  functionH :: [a] -> a
+
+  functionC :: (Ord a) => a -> a -> Bool
+
+  functionS :: (a, b) -> b
+#+END_SRC
+
+*** Given a type, write the function
+
+#+BEGIN_SRC haskell
+  i :: a -> a
+  i a = a
+
+  c :: a -> b -> a
+  c a _ = a
+
+  -- c'' is the same as c
+
+  c' :: a -> b -> b
+  c' _ b = b
+
+  r :: [a] -> [a]
+  r (_:as) = as
+
+  co :: (b -> c) -> (a -> b) -> a -> c
+  co bc ab a = bc $ ab a
+
+  a :: (a -> c) -> a -> a
+  a _ x = x
+
+  a' :: (a -> b) -> a -> b
+  a' f x = f x
+#+END_SRC
+
+*** Fix it
+
+Syntax practice.
+
+*** Type-Kwon-Do
+
+#+BEGIN_SRC haskell
+  f :: Int -> String
+  f = undefined
+
+  g :: String -> Char
+  g = undefined
+
+  h :: Int -> Char
+  h i = f $ g i
+#+END_SRC
+
+#+BEGIN_SRC haskell
+  data A
+  data B
+  data C
+
+  q :: A -> B
+  q = undefined
+
+  w :: B -> C
+  w = undefined
+
+  e :: A -> C
+  e a = w $ q a
+#+END_SRC
+
+#+BEGIN_SRC haskell
+  data X
+  data Y
+  data Z
+
+  xz :: X -> Z
+  xz = undefined
+
+  yz :: Y -> Z
+  yz = undefined
+
+  xform :: (X, Y) -> (Z, Z)
+  xform (x,y) = (xz x, yz y)
+#+END_SRC
+
+#+BEGIN_SRC haskell
+  munge :: (x -> y) -> (y -> (w, z)) -> x -> w
+  munge f g x = fst . g $ f x
+#+END_SRC
+* Chapter 6
+
+#+BEGIN_SRC haskell
+  >>> maxBound :: Int
+  9223372036854775807
+
+  >>> [1..10]
+  [1,2,3,4,5,6,7,8,9,10]
+
+  >>> ['a'..'z']
+  "abcdefghijklmnopqrstuvwxyz"
+
+  >>> [False ..]
+  [False,True]
+#+END_SRC
+
+Haskell's "not equals" is ~/=~, not ~!=~.
+
+We cannot compare things of different types.
+
+Typeclass Deriving. Here's a sample of what it looks like:
+
+#+BEGIN_SRC haskell
+  -- We can automatically derive a surprising amount of typeclasses.
+  data Colour = Red | Green | Blue deriving (Eq, Ord, Enum, Show)
+#+END_SRC
+
+Deriving ~Show~ allows values to be printable in the REPL. Functions don't
+derive ~Show~, so you can't print them.
+
+A /partial function/ (not to be confused with /partial application/, like ~(+ 1)~),
+is one which isn't defined for all possible inputs. Examples: ~head~, ~read~ (hence
+he said "Don't use the ~Read~ typeclass."
+
+#+BEGIN_QUOTE
+If you want your data to describe only a handful of cases, write
+them down in a sum type like the ~DayOfWeek~ datatype we showed
+you earlier. Don't use ~Int~ as an implicit sum type as C programmers
+commonly do.
+#+END_QUOTE
+
+#+BEGIN_QUOTE
+Since ~Real~ cannot override the methods of ~Num~, this typeclas inheritance is /only/
+additive and the ambiguity problems caused by multiple inheritance in some programming
+languages - the so-called "deadly diamond of death" - are avoided.
+#+END_QUOTE
+
+** Exercises
+
+*** Eq Instances
+
+#+BEGIN_SRC haskell
+  data TisAnInteger = TisAn Integer
+
+  instance Eq TisAnInteger where
+    TisAn i == TisAn i' = i == i'
+
+  data TwoIntegers = Two Integer Integer
+
+  instance Eq TwoIntegers where
+    Two a b == Two a' b' = a == a' && b == b'
+
+  data StringOrInt = TisAnInt Int | TisAString String
+
+  instance Eq StringOrInt where
+    TisAnInt a == TisAnInt b = a == b
+    TisAString a == TisAString b = a == b
+    _ == _ = False
+
+  data Pair a = Pair a a
+
+  instance Eq a => Pair a where
+    Pair a b == Pair a' b' = a == a' && b == b'
+
+  data Tuple a b = Tuple a b
+
+  instance (Eq a, Eq b) => Tuple a b where
+    Tuple a b == Tuple a' b' = a == a' && b == b'
+
+  data Which a = ThisOne a | ThatOne a
+
+  instance Eq a => Which a where
+    ThisOne a == ThisOne b = a == b
+    ThatOne a == ThatOne b = a == b
+    _ == _ = False
+
+  data EitherOr a b = Hello a | Goodbye b
+
+  instance (Eq a, Eq b) => EitherOr a b where
+    Hello a == Hello a' == a == a'
+    Goodbye b == Goodbye b' = b == b'
+    _ == _ = False
+#+END_SRC
+
+*** Will They Work?
+
+1. Yes, 5
+2. Yes, LT
+3. No
+4. Yes, False
+
+*** Multiple Choice
+
+1. c
+2. b
+3. a
+4. b
+5. a
+
+*** Does it typecheck?
+
+1. No, since ~Person~ has no ~Show~ instance.
+2. No, since ~Mood~ has no ~Eq~ instance.
+3.
+  a. Woot/Blah
+  b. Won't compile, since 9 is not a Mood value.
+  c. Bad, since Mood has no ~Ord~ instance.
+4. Yes they do.
+
+*** Given a datatype declaration, what can we do?
+
+1. No, since ~"chases"~ is not a ~Rocks~ value and ~True~ is not a ~Yeah~ value.
+2. Yes
+3. Yes
+4. No, no ~Ord~ instance.
+
+*** Match the types
+
+1. No
+2. No
+3. Yes
+4. Yes
+5. Yes, but no need
+6. Should be able to
+7. No
+8. No
+9. Yes
+10. Yes
+11. No
+
+*** Type-Kwon-Do Two: Electric Typealoo
+
+#+BEGIN_SRC haskell
+  chk :: Eq b => (a -> b) -> a -> b -> Bool
+  chk f a b = f a == b
+
+  arith :: Num b => (a -> b) -> Integer -> a -> b
+  arith f i a = fromIntegral i + f a
+#+END_SRC
+* Chapter 7
+
+#+BEGIN_QUOTE
+Pattern matching matches on any and all data constructors.
+#+END_QUOTE
+
+- ~newtype~ is very important.
+- Can't have an /if/ without /else/.
+- ~otherwise~ isn't syntax, it evaluates to ~True~.
+- Guards /kinda/ exist in Scala:
+
+#+BEGIN_SRC scala
+  def isRight(a: Int, b: Int, c: Int): String = a match {  // need to match on something pointlessly
+    case _ if a^2 + b^2 == c^2 => "RIGHT ON"
+    case _ => "not right"
+  }
+#+END_SRC
+
+
+** Exercises
+
+*** Grab Bag
+
+1. a, b, c, d
+2. d
+3.
+
+#+BEGIN_SRC haskell
+  addOneIfOdd n = case odd n of
+    True -> f n
+    False -> n
+    where f = \n -> n + 1
+
+  -- Real way:
+  addOneIfOdd n | odd n = n + 1
+                | otherwise = n
+
+  addFive = \x -> \y -> (if x > y then y else x) + 5
+
+  mflip f x y = f y x
+#+END_SRC
+
+*** Variety Pack
+
+1.
+
+a) ~k :: (a, b) -> a~
+b) ~k1 :: String~, no not the same.
+c) k1 and k3
+
+2.
+
+#+BEGIN_SRC haskell
+  f :: (a, b, c) -> (d, e, f) -> ((a, d), (c, f))
+  f (a,b,c) (d,e,f') = ((a,d), (c,f'))
+#+END_SRC
+
+*** Artful Dodgy
+
+1. 11
+2. 22
+3. 21
+4. 12
+5. 11
+6. and so on.
+
+*** Guard Duty
+
+1.
+2.
+3. b
+4. c
+
+*** Multiple Choice
+
+1. d
+2. b
+3. d
+4. b
+5. a
+
+*** Let's write code
+* Chapter 8
+
+#+BEGIN_QUOTE
+Applying a function to an argument and potentially doing something with the
+result is all we can do, no matter what syntactic conveniences we
+construct to make it seem that we are doing more than that.
+#+END_QUOTE
+
+~Maybe~ is synonymous with Scala's ~Option~.
+
+#+BEGIN_QUOTE
+Maybe makes all uses of nil values and most uses of bottom unnecessary.
+#+END_QUOTE
+
+/Partial functions/ (non-total functions) and /partially applied functions/ are
+not the same thing.
+
+** Exercises
+
+*** Review of Types
+
+1. d
+2. b
+3. d
+4. b
+
+*** Reviewing Currying
+
+1. woops mrow woohoo!
+2. 1 mrow haha
+3. ... and so on
+* Chapter 9
+
+#+BEGIN_QUOTE
+Because of this and the way nonstrict evaluation works, you can
+evaluate cons cells independently of what they contain.
+#+END_QUOTE
+
+** Exercises
+
+*** Will it blow up?
+
+1. It'll return a value
+2. Yup
+3. bottom
+4. yup
+5. bottom
+6. yup
+7. bottom
+8. yup
+9. yup
+10. bottom
+* Chapter 10 - Folds
+
+** Benchmarks
+
+Some tests I did to measure the speed of various ways to sum a list.
+
+- Recursion: a manually written tail-recursive sum
+- ~foldl~: ~foldl (+) 0~
+- ~foldl'~: Same as the above, but strict in the accumulator.
+- ~foldr~: ~foldr (+) 0~. Runs to the end of the list before it does anything.
+- ~sum~: ~sum :: (Num a, Foldable t) => t a -> a~, defined in terms of ~foldl~.
+- ~fold~: Sum via one of the ~Monoid~ typeclass instances for ~Int~.
+  Defined in terms of ~foldr~.
+
+/All times are in microseconds./
+
+| Values  | Recursion | ~foldl~ | ~foldl'~ | ~foldr~ | ~sum~ | ~fold~ |
+|---------+-----------+---------+----------+---------+-------+--------|
+| 10,000  |        30 |     274 |       69 |     109 |   274 |    110 |
+| 100,000 |       339 |   13070 |      759 |    2545 | 13200 |   2559 |
+
+* Chapter 11 - Algebraic Datatypes
+
+We've learned to define ADTs already, but this chapter gives us the full
+story surrounding creating our own types.
+
+#+BEGIN_QUOTE
+A type can be thought of as an enumeration of constructors that have zero
+or more arguments.
+#+END_QUOTE
+
+Ways to define new types:
+
+- Sum Types
+
+#+BEGIN_SRC haskell
+-- | A type with three values. `Bool` is defined this way.
+data Colour = Red | Green | Blue
+#+END_SRC
+
+- Product Types
+
+#+BEGIN_SRC haskell
+-- | A box with data in it. `User` is both the type and the type constructor.
+data User = User String Int Float deriving (Eq, Show)
+
+data Maybe a = Nothing | Just a
+#+END_SRC
+
+- Product Types w/ Record Syntax
+
+#+BEGIN_SRC haskell
+-- | Refer to the data fields by name. `name`, `age`, and `money` are all functions.
+data User = User { name :: String, age :: Int, money :: Float } deriving (Eq, Show)
+#+END_SRC
+
+- Type Aliases
+
+#+BEGIN_SRC haskell
+-- | Does /not/ create a new type - this alias is stripped at compile time.
+-- Cannot create typeclass instances for `String`.
+type String = [Char]
+#+END_SRC
+
+- ~newtype~
+
+#+BEGIN_SRC haskell
+-- | A light wrapping around some single value that /does/ create a new type.
+-- Can create typeclass instances for this new type. All wrap/unwrap calls
+-- are stripped at compile time, so there is no performance penalty for
+-- creating this type.
+newtype Raster a = Raster { values :: Vector a } deriving (Eq, Show)
+#+END_SRC
+
+** Data Declarations
+
+When writing a new library or application, it's common to first "lay out your types".
+Without knowing what types we're going to use, how can we write computations for them?
+
+#+BEGIN_SRC haskell
+-- | A type with three values. `Bool` is defined this way.
+data Colour = Red | Green | Blue
+#+END_SRC
+
+** Data and type constructors
+
+Two types of "constructors" in Haskell:
+
+- Type Constructors (used at the type-level for compilation)
+- Data Constructors (functions which create values of their associated type)
+
+~True~ /constructs/ a value of type ~Bool~. ~Just~ /constructs/ a value of type ~Maybe a~.
+
+#+BEGIN_SRC haskell
+-- | It's just a function.
+Just :: a -> Maybe a
+
+>>> map Just [1,2,3]
+[Just 1, Just 2, Just 3]
+#+END_SRC
+
+For ~Maybe~:
+
+#+BEGIN_SRC haskell
+data Maybe a = Nothing | Just a
+#+END_SRC
+
+~Maybe a~ is polymorphic: it could become ~Maybe Int~ or ~Maybe String~, etc. ~Maybe~ by
+itself isn't anything, it's a /type constructor/ that is used to create concrete types
+like ~Maybe Int~.
+
+** Type constructors and kinds
+
+New term: /kind signature/
+
+#+BEGIN_QUOTE
+Kinds are the types of types ... [and we] represent kinds in Haskell with ~*~.
+#+END_QUOTE
+
+A fully realized, concrete type has the kind ~*~. One that is yet to be fully applied
+is ~* -> *~. Looks like a function! In the REPL:
+
+#+BEGIN_SRC haskell
+>>> :k Maybe
+Maybe :: * -> *
+#+END_SRC
+
+The nugget: "Why do we need to think about kinds?"
+
+They're something that we have to be slightly conscious about when writing
+typeclass instances, once we've learned about the concepts from Chapter 14 onward.
+
+** Data constructors and values
+
+This section talks about the difference between the various type and data
+constructors.
+
+#+BEGIN_SRC haskell
+-- | Neither type nor value vary.
+data PugType = PugData
+
+-- | Type can vary but value does not.
+data HuskyType a = HuskyData
+
+-- | Both type and value can vary.
+data DogueDeBordeaux doge = DogueDeBordeaux doge
+#+END_SRC
+
+In the middle example, ~a~ is a /phantom type/, which is useful for enforcing certain
+rules about your types. Example:
+
+#+BEGIN_SRC haskell
+-- | `p` is a phantom type that could stand for the projection your Raster is in.
+newtype Raster p a = Raster { values :: Vector a }
+
+r1 :: Raster WebMercator Int
+
+r2 :: Raster LatLng Int
+
+-- | Local Sum over two Rasters.
+localSum :: Num a => Raster p a -> Raster p a -> Raster p a
+
+>>> localSum r1 r2  -- Compile error! WebMercator and LatLng don't match.
+#+END_SRC
+
+*** Exercises: Dog Types
+
+1. ~Doggies~ is a type constructor.
+2. ~* -> *~
+3. ~*~
+4. ~Num a => Doggies a~
+5. ~Doggies Integer~
+6. ~Doggies String~
+7. Both
+8. ~a -> DogueDeBordeaux~
+9. ~DogueDeBordeaux String~
+
+** What's a type and what's data?
+
+Important:
+
+#+BEGIN_QUOTE
+As we've seen, data constructors can take arguments. Those arguments will
+be specific types, but not specific values. In standard Haskell, we can't
+choose specific values of types as type arguments. We can't say, for example,
+"~Bool~ without the possibility of ~False~ as a value."
+#+END_QUOTE
+
+The above point is considered a strength. To elaborate, Haskell is not OO, and
+has no sub-typing. We can constrast this with Scala, where the following is possible:
+
+#+BEGIN_SRC scala
+    /** Sum types in Scala. */
+    sealed trait Colour
+    case object Red extends Colour
+    case object Blue extends Colour
+    case object Green extends Colour
+
+    def whichColour(c: Colour): String = c match {
+      case Red => "Red!"
+      case Blue => "Blue!"
+      case Green => "Green!"
+    }
+
+    /** `Red` is its own type, so this is possilbe.
+      *  May or may not be useful.
+      */
+    def redOnly(r: Red): String = ???
+#+END_SRC
+
+*** Exercises: Vehicles
+
+#+BEGIN_SRC haskell
+  data Price = Price Integer deriving (Eq, Show)
+
+  data Manufacturer = Mini | Mazda | Tata deriving (Eq, Show)
+
+  data Airline = PapuAir | CatapultsR'Us | TakeYourChancesUnited deriving (Eq, Show)
+
+  data Vehicle = Car Manufacturer Price | Plane Airline deriving (Eq, Show)
+#+END_SRC
+
+1. ~myCar :: Vehicle~
+
+2 to 5:
+
+#+BEGIN_SRC haskell
+  isCar :: Vehicle -> Bool
+  isCar (Car _ _) = True
+  isCar _ = False
+
+  isPlane :: Vehicle -> Bool
+  isPlane (Plane _) = True
+  isPlane _ = False
+
+  areCars :: [Vehicle] -> [Bool]
+  areCars = map isCar
+
+  getManu :: Vehicle -> Manufacturer
+  getManu (Car m _) = m
+  getManu _ = undefined  -- Bad bad bad (but what they asked for).
+#+END_SRC
+
+** Data constructor arities
+
+Familiar terms in a new context: nullary, unary, binary.
+These refer to the number of types that a type constructor takes as arguments, or the
+number of arguments a function takes.
+
+** What makes these datatypes algebraic?
+
+We call them algebraic because their argument structures come in two flavours,
+"sums" and "products". These words refer to their cardinalities, i.e. how many
+possible values inhabit their types.
+
+*** Exercises: Cardinality
+
+1. 1
+2. 3
+3. 2^16
+4. ~Int~ has finite cardinality, while ~Integer~ is infinite.
+5. Powers of two!
+
+*** Exercises: For Example
+
+1. ~MakeExample :: Example~. ~Example~ itself is not a data constructor, so we can't
+   use ~:t~ on it.
+2. Yes, that'll work.
+3. It's a unary function now: ~MakeExample :: Int -> Example~
+
+** ~newtype~
+
+Newtypes can only carry one value.
+
+~GeneralizedNewtypeDeriving~ is a handy way to reduce boilerplate.
+
+*** Exercises: Logic Goats
+
+#+BEGIN_SRC haskell
+  class TooMany a where
+    tooMany :: a -> Bool
+
+  instance TooMany Int where
+    tooMany n = n > 42
+
+  newtype Pair = Pair (Int, String)
+
+  instance TooMany Pair where
+    tooMany (Pair i _) = tooMany i
+
+  newtype Counts = Counts (Int, Int)
+
+  instance TooMany Counts where
+    tooMany (Counts n m) = tooMany n + tooMany m
+
+  instance (Num a, TooMany a) => TooMany (a, a) where
+    tooMany (a, b) = undefined -- doesn't matter.
+#+END_SRC
+
+** Sum types
+
+~|~ means /or/, so for counting sum type cardinalities, we add the individual cardinality
+of each section separated by ~|~.
+
+*** Exercises: Pity the Bool
+
+1.
+
+#+BEGIN_QUOTE
+(Big True | Big False) | (Small True | Small False) = ??
+
+
+Big True | Big False | Small True | Small False = ??
+
+Big True + Big False + Small True + Small False = ??
+
+1 + 1 + 1 + 1 = 4
+#+END_QUOTE
+
+2. 2^8 + 2. If you try to go outside the ~Int8~ bounds, you get a warning
+   at compile time and the value overflows as it would in C.
+
+** Product types
+
+#+BEGIN_QUOTE
+A product type's cardinality is the /product/ of the cardinalities of its inhabitants.
+Arithmetically, products are the result of /multiplication/.
+#+END_QUOTE
+
+#+BEGIN_SRC haskell
+-- | A sum.
+data Colour = Red | Green | Blue
+
+-- | A product.
+data User = User String Int
+
+-- | A sum of products.
+data Animal = Cat String Int | Dog String Float
+#+END_SRC
+
+As a record:
+
+#+BEGIN_SRC haskell
+-- | `name` and `age` are functions that operate on `User`. Avoids boilerplate.
+data User = User { name :: String, age :: Int } deriving (Eq, Show)
+#+END_SRC
+
+** Normal form
+
+*** Exercises: How Does Your Garden Grow?
+
+#+BEGIN_SRC haskell
+  -- INITIAL FORM
+  data FlowerType = Gardenia | Daisy | Rose | Lilac
+
+  type Gardener = String
+
+  data Garden = Garden Gardener FlowerType
+
+  -- NORMAL FORM
+  data Garden = Gardenia Gardener
+              | Daisy Gardener
+              | Rose Gardener
+              | Lilac Gardener
+#+END_SRC
+
+** Constructing and deconstructing values
+
+#+BEGIN_QUOTE
+Try to avoid using type synonyms with unstructured data like text or binary.
+Type synonyms are best used when you want somethign lighter weight than newtypes
+but also want your type signatures to be more explicit.
+#+END_QUOTE
+
+Ways of constructing products:
+
+#+BEGIN_SRC haskell
+  -- The usual way.
+  u1 :: User
+  u1 = User "Jim" 50
+
+  -- Explicit about the field names. Can make things clearer to read
+  -- if your type has many fields.
+  u2 :: User
+  u2 = User { name = "Jim", age = 50 }
+#+END_SRC
+
+*** Exercise: Programmers
+
+#+BEGIN_SRC haskell
+  data OS = Linux | BSD | Mac | Windows deriving (Enum)
+
+  data Lang = Haskell | Agda | Idris | PureScript deriving (Enum)
+
+  data Programmer = Programmer { os :: OS, lang :: Lang }
+
+  allProgrammers :: [Programmer]
+  allProgrammers = [ Programmer o l | o <- [Linux ..], l <- [Haskell ..] ]
+
+  -- The "real" way, using Applicative Functors.
+  allProgrammers' :: [Programmer]
+  allProgrammers' = Programmer <$> [Linux ..] <*> [Haskell ..]
+#+END_SRC
+
+** Function type is exponential
+
+#+BEGIN_QUOTE
+In the arithmetic of calculating inhabitants of types, the function type is
+the exponent operator.
+#+END_QUOTE
+
+#+BEGIN_QUOTE
+a -> b -> c
+
+(c ^ b) ^ a
+#+END_QUOTE
+
+*** Exercises: Expontentiation in what order?
+
+#+BEGIN_SRC haskell
+  data Quantum = Yes | No | Both
+
+  convert :: Quantum -> Bool
+  convert Yes  = True
+  convert No   = True
+  convert Both = True
+#+END_SRC
+
+The other implements become permutations of three sets of True/False values.
+There should be eight of these as expected.
+
+*** Exercises: The Quad
+
+#+BEGIN_SRC haskell
+  data Quad = One | Two | Three | Four
+#+END_SRC
+
+1. ~eQuad :: Either Quad Quad~. ~Either~ is a sum of unary products, so: 8 possible inhabitants.
+2. ~prodQuad :: (Quad, Quad)~. 4 * 4 = 16
+3. ~funcQuad :: Quad -> Quad~. 4 ^ 4 = 64
+4. ~prodTBool :: (Bool, Bool, Bool)~. 6
+5. ~gTwo :: Bool -> Bool -> Bool~. 2 ^ 2 ^ 2 = 16
+6. ~fTwo :: Bool -> Quad -> Quad~. 4 ^ 4 ^ 2 = 4096? But the hint says it a 5-digit number?
+
+** Higher-kinded datatypes
+
+A type with a kind like ~* -> *~ is called /higher-kinded/.
+
+#+BEGIN_QUOTE
+In Haskell, we do not conventionally put constraints on datatypes. That is,
+we don't want to constrain that polymorphic ~a~ in the datatype.
+#+END_QUOTE
+
+something like:
+
+#+BEGIN_SRC haskell
+-- Gross.
+data Eq a => User a = User String a
+
+-- There is always a better refactor that gives you more power.
+data User a = User String a
+
+-- Enforce constraints on functions instead.
+foo :: Eq q => User a -> Whatever
+#+END_SRC
+
+** Lists are polymorphic
+
+#+BEGIN_QUOTE
+All infix data constructors must start with a colon.
+#+END_QUOTE
+
+Cool, I didn't know that. I've never written an ADT with infix constructors before.
+
+** Binary Tree
+
+Seems like much work.
+
+*** Exercises: Write ~map~ for BinaryTree
+
+*** Exercises: Convert binary trees to lists
+
+*** Exercises: Write ~foldr~ for BinaryTree
+
+** Chapter Exercises
+
+*** Multiple Choice
+
+1. (a), Weekday is a type with five data constructors.
+2. (c), ~Weekday -> String~
+3. (b), must begin with a capital letter.
+4. (c), delivers the final element of ~xs~
+
+*** Ciphers
+
+Medium if Caesar Cipher already written.
+
+*** As-patterns
+
+Easyish.
+
+
+See associated file.
+
+*** Language exercises
+
+Interesting.
+
+*** Phone exercise
+
+Much work.
+
+*** Hutton's Razor
+
+Not too bad.
