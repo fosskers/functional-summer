@@ -126,7 +126,7 @@ Real way:
 The /ML/ reference in the opening quote wasn't for machine learning, it was
 for the ML language.
 
-The word /superclass/ does not mean the same thing that is does in OO.
+The word /super class/ does not mean the same thing that is does in OO.
 
 #+BEGIN_QUOTE
 (page 105) To oversimplify, ~(x * 100)~ evaluates to a numeric result, and
@@ -1235,3 +1235,277 @@ Much work.
 *** Hutton's Razor
 
 See associated file.
+
+* Chapter 15 - Monoids and Semigroups
+
+#+BEGIN_QUOTE
+To that end, we should steal prolifically from mathematics.
+#+END_QUOTE
+
+#+BEGIN_QUOTE
+But writing orphan instances should be avoided at all costs.
+If you get an orphan instance warning from GHC, fix it.
+#+END_QUOTE
+
+#+BEGIN_QUOTE
+Surprise! You can bind infix names for function arguments.
+#+END_QUOTE
+
+I had no idea!
+* Chapter 17 - Applicative
+
+Recap:
+
+- ~Monoids~ are things that are combinable
+- ~Functors~ are things which can be mapped over (i.e. have a pure function
+  applied to their entire structure)
+
+#+BEGIN_QUOTE
+Applicatives are monoidal functors. No, no, stay with us.
+#+END_QUOTE
+
+~Applicative~ is like ~Functor~ in that it allows you to map functions
+over structures. The difference is that the function itself is also
+embedded in that structure. This sounds abstract, but is very useful.
+
+** Defining ~Applicative~
+
+#+BEGIN_SRC haskell
+  class Functor f => Applicative f where
+    pure :: a -> f a
+    (<*>) :: f (a -> b) -> f a -> f b
+#+END_SRC
+
+This is the first time we've seen "superclassing" with typeclasses.
+Again, this has nothing to do with the /superclass/ concept from OO.
+The signature above says: for your type ~f~ to be an ~Applicative~,
+it must also be a ~Functor~ first.
+
+~pure~ lifts a value into your structure.
+
+#+BEGIN_SRC haskell
+  >>> pure 'c' :: [Char]
+  ['c']
+
+  >>> pure 'c' :: Maybe Char
+  Just 'c'
+
+  >>> pure 'c' :: Either String Char
+  Right 'c'
+
+  >>> pure 'c' :: Tree Char
+  Node 'c' []
+
+  >>> pure 'c' :: IO Char
+  ??? -- it's a mystery (for now)...
+#+END_SRC
+
+~<*>~ is often called "apply". He also claims it's called "tie fighter",
+but the Star Wars buff may notice the shape is closer to a TIE Bomber or
+TIE Advanced. ;)
+
+** ~Functor~ vs ~Applicative~
+
+The ultimate showdown.
+
+~$~, ~fmap~ and ~<*>~ are similar:
+
+#+BEGIN_SRC haskell
+  ($) :: (a -> b) -> a -> b
+
+  fmap :: (a -> b) -> f a -> f b
+
+  (<*>) :: f (a -> b) -> f a -> f b
+#+END_SRC
+
+~fmap~ is commonly aliased as ~<$>~ when writing Applicative code.
+Together with ~<*>~, we can now stretch a pure operation
+over some structure!
+
+#+BEGIN_SRC haskell
+  >>> (*) <$> [1,2,3] <*> [4,5,6]
+  [4,5,6, 8,10,12, 12,15,18]
+
+  >>> (\a b c -> a + b + c) <$> Just 1 <*> Just 2 <*> Just 3
+  Just 6
+
+  >>> (\a b c -> a + b + c) <$> Just 1 <*> Nothing <*> Just 3
+  Nothing
+#+END_SRC
+
+You can chain ~<*>~ together forever. Well, for as many arguments
+as your original lifted function takes.
+
+*** Tuple Monoid and Applicative side-by-side
+
+I think they're implying that the ~Monoid~ instance for tuple
+is a special case of tuple's ~Applicative~ instance.
+
+** ~Applicative~ in use
+
+*** Lists
+
+Map a plurality of functions over a plurality of values. A Cartesian Product.
+
+#+BEGIN_SRC haskell
+  >>> (,) <$> [1,2] <*> [3,4]
+  [(1,3), (1,4), (2,3), (2,4)]
+
+  >>> (*) <$> [1,2,3] <*> [4,5,6]
+  [4,5,6, 8,10,12, 12,15,18]
+#+END_SRC
+
+We can see the monoidalness of this in the fact that we got
+back a single list, not a list of lists.
+
+*Exercises: Lookups* - /See source./
+
+*** ~Identity~
+
+This section secretly hints at how lenses work.
+
+*Exercise: Identity Instance* - /See source./
+
+*** ~Constant~
+
+More lens hinting.
+
+*Exercise: Constant Instance* - /See source./
+
+*** ~Maybe~
+
+This helps us get rid of "pattern match ladders". We see these often in vanilla Scala code
+and they're a nightmare to read and debug around.
+
+#+BEGIN_SRC haskell
+  cow :: String -> Int -> Int -> Maybe Cow
+  cow n a w = Cow <$> noEmpty n <*> noNegative a <*> noNegative w
+#+END_SRC
+
+and the Scala:
+
+#+BEGIN_SRC scala
+  import cats._
+  import cats.implicits._
+
+  /* Nice and clean */
+  def goodCow(name: String, age: Int, weight: Int): Option[Cow] =
+    (noEmpty(name) |@| noNegative(age) |@| noNegative(weight)).map(Cow(_,_,_))
+
+  /* Kill me */
+  def badCow(name: String, age: Int, weight: Int): Option[Cow] = {
+    noEmpty(name) match {
+      case None => None
+      case Some(n) => noNegative(age) match {
+        case None => None
+        case Some(a) => noNegative(weight) match {
+          case None => None
+          case Some(w) => Some(Cow(n,a,w))
+        }
+      }
+    }
+  }
+#+END_SRC
+
+*** Exercise: Fixer Upper
+
+#+BEGIN_SRC haskell
+  const <$> Just "Hello" <*> Just "World"
+
+  (,,,) <$> Just 90 <*> Just 10 <*> Just "Tierness" <*> Just [1,2,3]
+#+END_SRC
+
+** Applicative Laws
+
+If we program with constructs that have laws governing their behaviour,
+we can make more guarantees about the correctness of our code. Basically:
+
+#+BEGIN_QUOTE
+"It's right cuz math."
+#+END_QUOTE
+
+Our ~Monoid~ laws said that a Monoid must have a /unit/ value (~mempty~) and
+an associative binary operator (~<>~ or ~mappend~).
+
+Our ~Functor~ laws said our Functor instances:
+
+- should preserve identity: ~fmap id == id~
+- should compose sanely: ~fmag (f . g) == fmap f . fmap g~
+
+which are the formal ways to say "our Functors shouldn't mangle structure".
+
+Our ~Applicative~ laws say that our Applicative instances:
+
+- should preserve identity: ~pure id <*> v == v~
+- should honour purity (homomorphism): ~pure f <*> pure x == pure (f x)~
+- shouldn't care about effect order (interchange): ~u <*> pure y == pure ($ y) <*> u~
+- should compose sanely: ~u <*> (v <*> w) == pure (.) <*> u <*> v <*> w~
+
+** ZipList Monoid
+
+A ~Monoid~ instance for List that would fuse each element in parallel, as opposed
+to concatinating the two lists. I've never seen it used.
+
+*** List Applicative Exercise
+*** ZipList Applicative Exercise
+*** Either and Validation Applicative
+
+#+BEGIN_SRC haskell
+  data Validation err a = Failure err | Success a
+#+END_SRC
+
+It can be very handy to accumulate everything that was wrong with some compound operation.
+Imagine parsing a source file - you'd want to know the location of every mistake. The same
+applies to validation of Forms on a website. Have you ever registered for a site, made
+multiple mistakes, but were only notified of them one by one, forcing you to fix-submit-fix-submit
+over and over? The dev behind that wasn't leveraging Applicatives.
+
+The Cats library from Scala has ~Validation~ as well, and it is used often in Raster Foundry (MAML).
+
+*** Exercise: Variations on Either
+
+** Chapter Exercises
+
+*** Type Signatures
+
+#+BEGIN_SRC haskell
+  pure  :: a -> [a]
+  (<*>) :: [a -> b] -> [a] -> [b]
+
+  pure  :: a -> IO a
+  (<*>) :: IO (a -> b) -> IO a -> IO b
+
+  pure  :: b -> (a, b)
+  (<*>) :: (a, b -> c) -> (a, b) -> (a, c)
+
+  pure  :: a -> (e -> a)
+  (<*>) :: (e -> (a -> b)) -> (e -> a) -> (e -> b)
+#+END_SRC
+
+*** Instances
+
+#+BEGIN_SRC haskell
+  data Pair a = Pair a a
+
+  instance Functor Pair where
+    fmap f (Pair a b) = Pair (f a) (f b)
+#+END_SRC
+
+#+BEGIN_SRC haskell
+  -- This is just a tuple.
+  data Two a b = Two a b
+
+  instance Functor (Two a) where
+    fmap f (Two a b) = Two a (f b)
+
+  instance Monoid a => Applicative (Two a) where
+    pure b = (mempty, b)
+
+    Two a f <*> Two a' b = Two (a <> a') (f b)
+#+END_SRC
+
+The others up to ~Four'~ are pretty much the same.
+
+*** Combinations
+
+/See source./
